@@ -1,0 +1,63 @@
+# 极简版：无密码、简化配置，适配个人项目
+services:
+  # MySQL服务：无root密码、无普通用户、自动创建xzdp库、utf8mb4字符集
+  mysql:
+    image: mysql:8.0-debian
+    container_name: xzdp-mysql
+    ports:
+      - "3306:3306"  # 主机3306映射容器3306
+    environment:
+      MYSQL_ROOT_PASSWORD: ""  # 取消root密码，直接登录
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"  # 核心新增：显式允许空密码（必须配置）
+      MYSQL_DATABASE: xzdp     # 自动创建项目数据库xzdp
+      TZ: Asia/Shanghai        # 时区同步上海
+      MYSQL_CHARACTER_SET_SERVER: utf8mb4  # 兼容emoji
+      MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
+    volumes:
+      # 数据持久化：主机相对路径（与docker-compose.yml同目录），无需手动创建/home目录
+      - ./data/mysql:/var/lib/mysql
+      # 初始化脚本：首次启动自动执行，无则可注释这一行
+      - ./script/init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: on-failure  # 失败自动重启
+    command: --default-authentication-plugin=mysql_native_password  # 保持兼容性
+
+  # Redis服务：无密码、开启AOF持久化、简化配置
+  redis:
+    image: redis:7.2
+    container_name: xzdp-redis
+    ports:
+      - "6379:6379"  # 主机6379映射容器6379
+    environment:
+      TZ: Asia/Shanghai  # 时区同步上海
+    volumes:
+      - ./data/redis:/data  # 数据持久化，AOF文件保存在此
+    command: redis-server   # 默认关闭AOF持久化，默认无密码（删除--requirepass ""） --appendonly yes 开启持久化
+    restart: on-failure  # 失败自动重启
+
+  # Nginx服务：使用官方镜像，挂载本地前端项目代码和自定义配置
+  nginx:
+    # 使用官方Nginx稳定版镜像，与本地1.18.0功能一致，无需手动安装
+    image: nginx:1.28
+    # 自定义容器名称，方便识别和操作
+    container_name: xzdp-nginx
+    # 端口映射：主机8080端口 → 容器8080端口（前端项目默认访问端口，可修改为8080等）
+    ports:
+      - "8080:8080"
+    environment:
+      # 时区同步上海，与其他服务保持一致
+      TZ: Asia/Shanghai
+    volumes:
+      # 核心挂载1：前端项目代码目录（主机→容器）
+      # 替换为【你的本地前端项目根目录】，容器内/usr/share/nginx/html是Nginx默认静态资源目录
+      - /home/code/xzdp-starter/frontend/nginx-1.18.0/html:/usr/share/nginx/html
+      # 核心挂载2：自定义Nginx配置文件（主机→容器），替代本地-c参数
+      # 替换为【你的本地nginx.conf绝对路径】，容器内/etc/nginx/nginx.conf是默认配置文件路径
+      - /home/code/xzdp-starter/frontend/nginx-1.18.0/conf/nginx.conf:/etc/nginx/nginx.conf
+      # 可选挂载：Nginx日志目录（主机→容器），方便本地查看日志
+      - ./data/nginx/logs:/var/log/nginx
+    # 重启策略：与其他服务一致，失败自动重启
+    restart: on-failure
+    # 依赖启动：确保Nginx在MySQL/Redis启动后再启动（可选，视前端是否依赖后端服务而定）
+    depends_on:
+      - mysql
+      - redis

@@ -1,0 +1,38 @@
+# Go编译文件
+/bin/
+/obj/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*_exe.go
+*_test.go
+
+# 持久化数据目录（核心：忽略data，避免提交数据库/Redis数据）
+/data/
+
+# 本地配置文件（开发环境自定义配置，不上库）
+/conf/dev/conf.yaml
+/conf/test/conf.yaml
+/conf/prod/conf.yaml
+
+# IDE/编辑器配置
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Docker临时文件
+.dockerignore
+*.tar.gz
+
+# 日志文件
+/logs/
+*.log
+
+/nginx-1.18.0/
+
+# 其他
+.DS_Store
