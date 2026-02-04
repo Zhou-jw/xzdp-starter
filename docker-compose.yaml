@@ -17,7 +17,7 @@ services:
       # 数据持久化：主机相对路径（与docker-compose.yml同目录），无需手动创建/home目录
       - ./data/mysql:/var/lib/mysql
       # 初始化脚本：首次启动自动执行，无则可注释这一行
-      - ./script/init.sql:/docker-entrypoint-initdb.d/init.sql
+      # - ./script/init.sql:/docker-entrypoint-initdb.d/init.sql
     restart: on-failure  # 失败自动重启
     command: --default-authentication-plugin=mysql_native_password  # 保持兼容性
 
@@ -43,6 +43,8 @@ services:
     # 端口映射：主机8080端口 → 容器8080端口（前端项目默认访问端口，可修改为8080等）
     ports:
       - "8080:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway" # 关键：将host.docker.internal映射到宿主机网关
     environment:
       # 时区同步上海，与其他服务保持一致
       TZ: Asia/Shanghai
