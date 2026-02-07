@@ -1,7 +1,7 @@
 ### 项目结构
 ```
 xzdp-go-starter/
-├── config/               # 配置层：环境隔离配置（开发/测试/生产）
+├── config/             # 配置层：环境隔离配置（开发/测试/生产）
 │   ├── dev/            # 开发环境配置
 │   ├── test/           # 测试环境配置
 │   └── prod/           # 生产环境配置
@@ -14,6 +14,16 @@ xzdp-go-starter/
 ├── scripts/            # 脚本目录：初始化、启动、部署脚本
 │   ├── xzdp.sql/       # Redis持久化数据（映射容器内/data）
 │   └── init_go.sh      # go 环境初始化脚本
+├── src/                # 项目核心业务代码（所有自己写的逻辑都放这，是重点）
+│   ├── biz/             
+│   │   ├── handler/    # 「接口处理函数」存放地：每个接口的具体业务逻辑
+│   │   ├── model/      # 「数据模型」存放地：请求/响应的结构体 idl生成
+│   │   └── router/     # 「路由注册」存放地：接口路径和处理函数的映射（IDL生成，不用改） 
+│   ├── idl/            # 接口定义文件（thrift/proto）：IDL生成handler、model、router的基础
+│   ├── middleware/     # 自定义中间件根目录，一个中间件一个子目录
+│   ├── script/
+│   ├── utils/          # 
+│   └── main.go         # 项目入口：启动服务、注册路由、初始化全局组件
 ├── docker-compose.yaml # Docker Compose配置：一键启动MySQL+Redis（绑定data目录）
 ├── .gitignore          # Git忽略文件：忽略data、编译文件、配置密文等
 ├── go.mod              # Go模块依赖

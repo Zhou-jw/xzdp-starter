@@ -8,6 +8,7 @@ import (
 	user "github.com/Zhou-jw/xzdp-starter/src/biz/model/api/user"
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
+	"log"
 )
 
 // SendCode .
@@ -17,12 +18,22 @@ func SendCode(ctx context.Context, c *app.RequestContext) {
 	var req user.SendCodeRequest
 	err = c.BindAndValidate(&req)
 	if err != nil {
-		c.String(consts.StatusBadRequest, err.Error())
+		resp := &user.BaseResponse{
+			Code:    consts.StatusBadRequest, // 400错误码
+			Message: err.Error(),             // 错误信息
+			Data:    nil,                     // 错误时Data为空
+		}
+		c.JSON(consts.StatusBadRequest, resp)
 		return
 	}
 
-	resp := new(user.BaseResponse)
-	resp.Message = "Code sent successfully"
+	verifyCode := "987654"
+
+	resp := &user.BaseResponse{
+		Code:    consts.StatusOK,          // 200成功码
+		Message: "Code sent successfully", // 提示信息
+		Data:    &verifyCode,              // 关键：Data是*string类型，需传字符串地址
+	}
 
 	c.JSON(consts.StatusOK, resp)
 }
@@ -30,16 +41,32 @@ func SendCode(ctx context.Context, c *app.RequestContext) {
 // SmsLogin .
 // @router /api/user/login [POST]
 func SmsLogin(ctx context.Context, c *app.RequestContext) {
-	var err error
 	var req user.SmsLoginRequest
-	err = c.BindAndValidate(&req)
+	err := c.BindAndValidate(&req)
 	if err != nil {
-		c.String(consts.StatusBadRequest, err.Error())
+		resp := &user.BaseResponse{
+			Code:    consts.StatusBadRequest, // 400错误码
+			Message: err.Error(),             // 错误信息
+			Data:    nil,                     // 错误时Data为空
+		}
+		c.JSON(consts.StatusBadRequest, resp)
+		return
+	}
+
+	// check sms code
+	valid, _ := checkSmsCode(req.Phone, req.SmsCode)
+	if !valid {
+		c.String(consts.StatusUnauthorized, "Invalid SMS code")
 		return
 	}
 
 	resp := new(user.BaseResponse)
-	resp.Message = "Login successful"
+	resp.Message = "Login successfully"
 
 	c.JSON(consts.StatusOK, resp)
+}
+
+func checkSmsCode(phone string, code string) (bool, error) {
+	log.Println("Checking SMS code for phone:", phone, "code:", code)
+	return true, nil
 }

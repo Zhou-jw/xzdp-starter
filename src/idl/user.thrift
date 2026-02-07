@@ -6,15 +6,20 @@ namespace go api.user
 // 2. 空结构体：用于无入参接口（如刷新token、获取当前用户）
 struct Empty {}
 
-// 3. 发送验证码请求结构体：匹配POST /api/user/code?phone=xxx的请求格式
-// 核心：phone通过Query传参，与HTTP请求URL中的query参数对应
+// 3. 用户结构体
+struct User {
+    string Phone
+    string password
+}
+
+// 4. 发送验证码请求结构体：匹配POST /api/user/code?phone=xxx的请求格式
 struct SendCodeRequest {
     1: required string Phone (api.query="phone");  // 手机号（必传，Query参数，对应?phone=xxx）
 }
 
 struct SmsLoginRequest {
-    1: required string Phone (api.query="phone");   // 手机号（Query参数，与发验证码一致）
-    2: required string SmsCode (api.query="code");  // 短信验证码（Query参数，如?code=123456）
+    1: required string Phone (api.body="phone");   // 手机号（Query参数，与发验证码一致）
+    2: required string SmsCode (api.body="code");  // 短信验证码（Query参数，如?code=123456）
 }
 
 // 4. 通用返回结果结构体：统一接口返回格式，适配所有业务接口
@@ -52,5 +57,3 @@ service UserService {
      */
     BaseResponse SmsLogin(1: SmsLoginRequest req) (api.post="/api/user/login", api.path="/api/user/login");
 }
-
-// ：短信验证码登录请求结构体（与SendCode配套，可选追加）
