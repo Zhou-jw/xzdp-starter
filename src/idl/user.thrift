@@ -1,59 +1,68 @@
 // idl/user.thrift
 
-// 1. 命名空间：生成Go代码时的包名，对应项目模块路径
 namespace go api.user
 
-// 2. 空结构体：用于无入参接口（如刷新token、获取当前用户）
-struct Empty {}
-
-// 3. 用户结构体
-struct User {
-    string Phone
-    string password
-}
-
-// 4. 发送验证码请求结构体：匹配POST /api/user/code?phone=xxx的请求格式
+// ------------------------------
+// 2. 接口请求/响应结构体
+// ------------------------------
+// 2.1 发送验证码：Request + Response
 struct SendCodeRequest {
-    1: required string Phone (api.query="phone");  // 手机号（必传，Query参数，对应?phone=xxx）
+    1: required string Phone (api.query="phone");  // 手机号（Query参数，?phone=xxx）
 }
 
+struct SendCodeResponse {
+    1: required i32 Code = 200;             // 状态码：200成功，非200失败
+    2: required string Msg = "ok";          // 提示信息：失败时返回具体错误
+    3: required string Data;                      // 扩展字段：预留（如验证码ID）
+    4: optional i64 Timestamp;                    // 响应时间戳（毫秒）
+}
+
+// 2.2 短信登录：Request + Response
 struct SmsLoginRequest {
-    1: required string Phone (api.body="phone");   // 手机号（Query参数，与发验证码一致）
-    2: required string SmsCode (api.body="code");  // 短信验证码（Query参数，如?code=123456）
+    1: required string Phone (api.body="phone");   // 手机号（JSON请求体）
+    2: required string SmsCode (api.body="code");  // 短信验证码（JSON请求体）
 }
 
-// 4. 通用返回结果结构体：统一接口返回格式，适配所有业务接口
-// 替代零散的返回类型，提升项目一致性
-struct BaseResponse {
-    1: required i32 Code = 200;        // 状态码：200成功，非200失败
-    2: required string Message = "ok"; // 提示信息：失败时返回具体错误描述
-    3: optional string Data;           // 数据体：成功时返回业务数据（JSON字符串，泛型适配）
-    4: optional i64 Timestamp;         // 时间戳：服务端响应时间（毫秒）
+struct SmsLoginResponse {
+    1: required i32 Code = 200;             // 状态码
+    2: required string Msg = "ok";          // 提示信息
+    3: optional string AccessToken;               // JWT访问令牌（核心）
+    4: optional i64 ExpireAt;                     // Token过期时间（毫秒时间戳）
+    5: optional string Phone;                     // 登录手机号（替代User结构体的核心字段）
+    6: optional i64 Timestamp;                    // 响应时间戳
 }
 
-// 5. 登录成功返回结构体：包含JWT Token和基础用户信息（验证码登录成功后返回）
-// 核心：给客户端返回可直接使用的JWT令牌，客户端后续请求携带该token鉴权
-struct LoginResponse {
-    1: required string AccessToken;    // Hertz-JWT生成的访问令牌（核心，客户端需存在header中）
-    2: required i64 ExpireAt;          // token过期时间（毫秒时间戳，客户端可做本地过期判断）
-    3: optional string Phone;          // 登录手机号，方便客户端展示
-    // 可选：追加轻量用户信息（如昵称、头像），避免客户端二次请求
+// 2.3 获取当前用户信息
+struct UserMeRequest {
+    1: optional string Token (api.header="Authorization"); // JWT令牌（请求头）
+}
+
+struct UserMeResponse {
+    1: required i32 Code = 200;             // 状态码
+    2: required string Msg = "ok";          // 提示信息
+    3: optional string Phone;                     // 当前登录用户手机号（核心标识）
+    // 可选扩展：如需其他基础信息，直接添加字符串字段，无需结构体
     // 4: optional string NickName;
     // 5: optional string Avatar;
+    4: optional i64 Timestamp;                    // 响应时间戳
 }
 
-// 6. 用户核心服务定义：聚合用户模块所有接口，IDL即接口契约
+// ------------------------------
+// 4. 用户核心服务定义
+// ------------------------------
 service UserService {
     /**
-     * 发送短信验证码接口：匹配需求中的POST /api/user/code?phone=xxx
-     * 注解说明：api.post指定POST方法，api.path指定完整请求路径
-     * 返回值：BaseResponse，成功时Data为""，失败时Message返回错误信息
+     * 发送短信验证码接口
      */
-    BaseResponse SendCode(1: SendCodeRequest req) (api.post="/api/user/code", api.path="/api/user/code");
+    SendCodeResponse SendCode(1: SendCodeRequest req) (api.post="/api/user/code", api.path="/api/user/code");
 
     /**
-     * 短信验证码登录接口：基于发送的验证码完成登录，返回JWT Token
-     * 补充：与SendCode配合，完成「发验证码→验证验证码登录」闭环
+     * 短信验证码登录接口
      */
-    BaseResponse SmsLogin(1: SmsLoginRequest req) (api.post="/api/user/login", api.path="/api/user/login");
+    SmsLoginResponse SmsLogin(1: SmsLoginRequest req) (api.post="/api/user/login", api.path="/api/user/login");
+
+    /**
+     * 获取当前用户信息接口
+     */
+    UserMeResponse UserMe(1: UserMeRequest req) (api.get="/api/user/me", api.path="/api/user/me");
 }

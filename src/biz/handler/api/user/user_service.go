@@ -18,10 +18,9 @@ func SendCode(ctx context.Context, c *app.RequestContext) {
 	var req user.SendCodeRequest
 	err = c.BindAndValidate(&req)
 	if err != nil {
-		resp := &user.BaseResponse{
+		resp := &user.SendCodeResponse{
 			Code:    consts.StatusBadRequest, // 400错误码
-			Message: err.Error(),             // 错误信息
-			Data:    nil,                     // 错误时Data为空
+			Msg: err.Error(),             // 错误信息
 		}
 		c.JSON(consts.StatusBadRequest, resp)
 		return
@@ -29,10 +28,10 @@ func SendCode(ctx context.Context, c *app.RequestContext) {
 
 	verifyCode := "987654"
 
-	resp := &user.BaseResponse{
+	resp := &user.SendCodeResponse{
 		Code:    consts.StatusOK,          // 200成功码
-		Message: "Code sent successfully", // 提示信息
-		Data:    &verifyCode,              // 关键：Data是*string类型，需传字符串地址
+		Msg: "Code sent successfully", // 提示信息
+		Data: verifyCode,
 	}
 
 	c.JSON(consts.StatusOK, resp)
@@ -44,10 +43,9 @@ func SmsLogin(ctx context.Context, c *app.RequestContext) {
 	var req user.SmsLoginRequest
 	err := c.BindAndValidate(&req)
 	if err != nil {
-		resp := &user.BaseResponse{
-			Code:    consts.StatusBadRequest, // 400错误码
-			Message: err.Error(),             // 错误信息
-			Data:    nil,                     // 错误时Data为空
+		resp := &user.SmsLoginResponse{
+			Code: consts.StatusBadRequest, // 400错误码
+			Msg:  err.Error(),             // 错误信息
 		}
 		c.JSON(consts.StatusBadRequest, resp)
 		return
@@ -60,8 +58,8 @@ func SmsLogin(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	resp := new(user.BaseResponse)
-	resp.Message = "Login successfully"
+	resp := new(user.SmsLoginResponse)
+	resp.Msg = "Login successfully"
 
 	c.JSON(consts.StatusOK, resp)
 }
@@ -69,4 +67,20 @@ func SmsLogin(ctx context.Context, c *app.RequestContext) {
 func checkSmsCode(phone string, code string) (bool, error) {
 	log.Println("Checking SMS code for phone:", phone, "code:", code)
 	return true, nil
+}
+
+// UserMe .
+// @router /api/user/me [GET]
+func UserMe(ctx context.Context, c *app.RequestContext) {
+	var err error
+	var req user.UserMeRequest
+	err = c.BindAndValidate(&req)
+	if err != nil {
+		c.String(consts.StatusBadRequest, err.Error())
+		return
+	}
+
+	resp := new(user.UserMeResponse)
+
+	c.JSON(consts.StatusOK, resp)
 }

@@ -8,10 +8,17 @@ import (
 	config "github.com/Zhou-jw/xzdp-starter/config"
 	app "github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/app/server"
+	jwt_mw "github.com/Zhou-jw/xzdp-starter/src/biz/middleware/jwt_mw"
 )
+
+func Init() {
+	jwt_mw.Init();
+}
 
 func main() {
 	h := server.Default(server.WithHostPorts(config.GetConf().Hertz.Address))
+	Init()
+
 	excludedPaths := []string{
 		"/shop",
 		"/voucher",

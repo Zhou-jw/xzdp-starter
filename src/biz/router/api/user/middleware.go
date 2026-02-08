@@ -3,7 +3,7 @@
 package user
 
 import (
-	jwtmw "github.com/Zhou-jw/xzdp-starter/src/middleware/jwt_mw"
+	jwtmw "github.com/Zhou-jw/xzdp-starter/src/biz/middleware/jwt_mw"
 	"github.com/cloudwego/hertz/pkg/app"
 )
 
@@ -32,4 +32,9 @@ func _smsloginMw() []app.HandlerFunc {
 	return []app.HandlerFunc{
 		jwtmw.JwtMiddleware.LoginHandler, // 在登录接口上使用JWT中间件，自动处理JWT验证和用户信息提取
 	}
+}
+
+func _usermeMw() []app.HandlerFunc {
+	// your code...
+	return nil
 }

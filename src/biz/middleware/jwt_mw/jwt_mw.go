@@ -15,43 +15,50 @@ import (
 // 全局身份Key，用于从请求上下文获取用户信息
 var (
 	IdentityKey   = "phone"
-	JwtMiddleware = InitJWTMiddleware()
+	JwtMiddleware *jwt.HertzJWTMiddleware
 )
 
 // 初始化JWT中间件，返回全局的JWT中间件实例
-func InitJWTMiddleware() *jwt.HertzJWTMiddleware {
-	authMiddleware, err := jwt.New(&jwt.HertzJWTMiddleware{
+func Init() {
+	var err error
+	JwtMiddleware ,err = jwt.New(&jwt.HertzJWTMiddleware{
 		Realm:       "xzdp-starter",                 // 认证域，自定义即可
 		Key:         []byte("xzdp_2026_jwt_secret"), // 加密密钥，生产环境用环境变量！
 		Timeout:     time.Hour,                      // Token有效期
 		MaxRefresh:  time.Hour,                      // Token最大刷新时间
 		IdentityKey: IdentityKey,
+		
+		// 认证函数
+		Authenticator: func(ctx context.Context, c *app.RequestContext) (interface{}, error) {
+			var loginReq user.SmsLoginRequest
+			err := c.BindAndValidate(&loginReq)
+			if err != nil {
+				log.Printf("Authenticator error in jwt")
+				return nil, err
+			}
+			return loginReq.Phone, nil
+		},
 
 		// Payload构造：将用户信息存入JWT载荷
+		// data is the return value of Authenticator, which is the phone number in this case
 		PayloadFunc: func(data interface{}) jwt.MapClaims {
 			// data是短信登录成功后传入的用户ID/手机号等信息
-			if v, ok := data.(*user.User); ok {
+			if v, ok := data.(string); ok {
 				return jwt.MapClaims{
-					IdentityKey: v.Phone, // 载荷中存入用户唯一标识（手机号/用户ID）
+					IdentityKey: v, // 载荷中存入用户唯一标识（手机号/用户ID）
 				}
 			}
 			return jwt.MapClaims{}
 		},
 
 		// 解析JWT后，从载荷构造用户身份，存入请求上下文
-		IdentityHandler: func(ctx context.Context, c *app.RequestContext) interface{} {
-			claims := jwt.ExtractClaims(ctx, c)
-			// 从载荷中获取用户唯一标识，返回（后续c.Get(IdentityKey)可获取）
-			return &user.User{
-				Phone: claims[IdentityKey].(string), // 从载荷中获取手机号
-			}
-		},
-
-		// 【短信登录专用】重写Authenticator：因为短信登录不需要用户名密码，这里留空（后续在接口中手动签发）
-		// 注意：原用户名密码登录的Authenticator不需要了，短信登录的校验在SmsLogin接口中完成
-		Authenticator: func(ctx context.Context, c *app.RequestContext) (interface{}, error) {
-			return nil, nil // 短信登录手动校验，这里直接返回
-		},
+		// IdentityHandler: func(ctx context.Context, c *app.RequestContext) interface{} {
+		// 	claims := jwt.ExtractClaims(ctx, c)
+		// 	// 从载荷中获取用户唯一标识，返回（后续c.Get(IdentityKey)可获取）
+		// 	return &user.User{
+		// 		Phone: claims[IdentityKey].(string), // 从载荷中获取手机号
+		// 	}
+		// },
 
 		// token 生成成功后的响应：返回标准化JSON，包含token和过期时间
 		LoginResponse: func(ctx context.Context, c *app.RequestContext, code int, token string, expire time.Time) {
@@ -83,6 +90,4 @@ func InitJWTMiddleware() *jwt.HertzJWTMiddleware {
 	if err != nil {
 		log.Fatalf("JWT中间件初始化失败: %v", err)
 	}
-
-	return authMiddleware
 }
