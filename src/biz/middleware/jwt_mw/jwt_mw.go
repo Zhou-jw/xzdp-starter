@@ -37,7 +37,6 @@ func Init() {
 				return nil, err
 			}
 			
-			// TODO: query user from DB, if user not exist 
 			return loginReq.Phone, nil
 		},
 

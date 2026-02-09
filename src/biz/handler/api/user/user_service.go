@@ -5,10 +5,12 @@ package user
 import (
 	"context"
 
+	"log"
+
+	"github.com/Zhou-jw/xzdp-starter/src/biz/middleware/redis"
 	user "github.com/Zhou-jw/xzdp-starter/src/biz/model/api/user"
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
-	"log"
 )
 
 // SendCode .
@@ -27,6 +29,7 @@ func SendCode(ctx context.Context, c *app.RequestContext) {
 	}
 
 	verifyCode := "987654"
+	redis.AddSmsCode(req.Phone, verifyCode)
 
 	resp := &user.SendCodeResponse{
 		Code:    consts.StatusOK,          // 200成功码
@@ -66,7 +69,8 @@ func SmsLogin(ctx context.Context, c *app.RequestContext) {
 
 func checkSmsCode(phone string, code string) (bool, error) {
 	log.Println("Checking SMS code for phone:", phone, "code:", code)
-	return true, nil
+	valid, err := redis.CheckSmsCode(phone, code)
+	return valid, err
 }
 
 // UserMe .

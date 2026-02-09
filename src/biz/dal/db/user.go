@@ -30,7 +30,7 @@ func CreateUser(user *User) (int64, error) {
 }
 
 // return user id, whether created new user, error
-func CreateUserIfNotExist(phone string, hashedPwd string) (int64, bool, error) {
+func GetOrCreateUserIfNotExist(phone string, hashedPwd string) (int64, bool, error) {
 	var user User
 
 	err := DB.Where("phone = ?", phone).First(&user).Error
@@ -49,4 +49,13 @@ func CreateUserIfNotExist(phone string, hashedPwd string) (int64, bool, error) {
 	}
 
 	return newUser.ID, true, nil
+}
+
+// query User by phone
+func QueryUser(phone string) (*User, error) {
+	var user User
+	if err := DB.Where("phone = ?", phone).Find(&user).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
 }
