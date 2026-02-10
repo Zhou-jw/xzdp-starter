@@ -26,10 +26,7 @@ struct SmsLoginRequest {
 struct SmsLoginResponse {
     1: required i32 Code = 200;             // 状态码
     2: required string Msg = "ok";          // 提示信息
-    3: optional string AccessToken;               // JWT访问令牌（核心）
-    4: optional i64 ExpireAt;                     // Token过期时间（毫秒时间戳）
-    5: optional string Phone;                     // 登录手机号（替代User结构体的核心字段）
-    6: optional i64 Timestamp;                    // 响应时间戳
+    3: required string Token;               // JWT访问令牌（核心）
 }
 
 // 2.3 获取当前用户信息

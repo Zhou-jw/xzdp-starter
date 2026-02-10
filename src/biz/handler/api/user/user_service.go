@@ -7,6 +7,7 @@ import (
 
 	"log"
 
+	"github.com/Zhou-jw/xzdp-starter/src/biz/dal/db"
 	"github.com/Zhou-jw/xzdp-starter/src/biz/middleware/redis"
 	user "github.com/Zhou-jw/xzdp-starter/src/biz/model/api/user"
 	"github.com/cloudwego/hertz/pkg/app"
@@ -21,8 +22,8 @@ func SendCode(ctx context.Context, c *app.RequestContext) {
 	err = c.BindAndValidate(&req)
 	if err != nil {
 		resp := &user.SendCodeResponse{
-			Code:    consts.StatusBadRequest, // 400错误码
-			Msg: err.Error(),             // 错误信息
+			Code: consts.StatusBadRequest, // 400错误码
+			Msg:  err.Error(),             // 错误信息
 		}
 		c.JSON(consts.StatusBadRequest, resp)
 		return
@@ -32,8 +33,8 @@ func SendCode(ctx context.Context, c *app.RequestContext) {
 	redis.AddSmsCode(req.Phone, verifyCode)
 
 	resp := &user.SendCodeResponse{
-		Code:    consts.StatusOK,          // 200成功码
-		Msg: "Code sent successfully", // 提示信息
+		Code: consts.StatusOK,          // 200成功码
+		Msg:  "Code sent successfully", // 提示信息
 		Data: verifyCode,
 	}
 
@@ -61,10 +62,12 @@ func SmsLogin(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	resp := new(user.SmsLoginResponse)
-	resp.Msg = "Login successfully"
-
-	c.JSON(consts.StatusOK, resp)
+	token := c.GetString("token")
+	c.JSON(consts.StatusOK, user.SmsLoginResponse{
+		Code:  consts.StatusOK,
+		Msg:   "Login successful",
+		Token: token,
+	})
 }
 
 func checkSmsCode(phone string, code string) (bool, error) {
@@ -84,7 +87,10 @@ func UserMe(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
+	dbUser, err := db.QueryUser(req.Phone)
+
 	resp := new(user.UserMeResponse)
+	resp.Phone = dbUser.Phone
 
 	c.JSON(consts.StatusOK, resp)
 }

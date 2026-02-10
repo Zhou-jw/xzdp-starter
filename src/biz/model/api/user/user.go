@@ -691,13 +691,7 @@ type SmsLoginResponse struct {
 	// 提示信息
 	Msg string `thrift:"Msg,2,required" form:"Msg,required" json:"Msg,required" query:"Msg,required"`
 	// JWT访问令牌（核心）
-	AccessToken *string `thrift:"AccessToken,3,optional" form:"AccessToken" json:"AccessToken,omitempty" query:"AccessToken"`
-	// Token过期时间（毫秒时间戳）
-	ExpireAt *int64 `thrift:"ExpireAt,4,optional" form:"ExpireAt" json:"ExpireAt,omitempty" query:"ExpireAt"`
-	// 登录手机号（替代User结构体的核心字段）
-	Phone *string `thrift:"Phone,5,optional" form:"Phone" json:"Phone,omitempty" query:"Phone"`
-	// 响应时间戳
-	Timestamp *int64 `thrift:"Timestamp,6,optional" form:"Timestamp" json:"Timestamp,omitempty" query:"Timestamp"`
+	Token string `thrift:"Token,3,required" form:"Token,required" json:"Token,required" query:"Token,required"`
 }
 
 func NewSmsLoginResponse() *SmsLoginResponse {
@@ -720,65 +714,14 @@ func (p *SmsLoginResponse) GetMsg() (v string) {
 	return p.Msg
 }
 
-var SmsLoginResponse_AccessToken_DEFAULT string
-
-func (p *SmsLoginResponse) GetAccessToken() (v string) {
-	if !p.IsSetAccessToken() {
-		return SmsLoginResponse_AccessToken_DEFAULT
-	}
-	return *p.AccessToken
-}
-
-var SmsLoginResponse_ExpireAt_DEFAULT int64
-
-func (p *SmsLoginResponse) GetExpireAt() (v int64) {
-	if !p.IsSetExpireAt() {
-		return SmsLoginResponse_ExpireAt_DEFAULT
-	}
-	return *p.ExpireAt
-}
-
-var SmsLoginResponse_Phone_DEFAULT string
-
-func (p *SmsLoginResponse) GetPhone() (v string) {
-	if !p.IsSetPhone() {
-		return SmsLoginResponse_Phone_DEFAULT
-	}
-	return *p.Phone
-}
-
-var SmsLoginResponse_Timestamp_DEFAULT int64
-
-func (p *SmsLoginResponse) GetTimestamp() (v int64) {
-	if !p.IsSetTimestamp() {
-		return SmsLoginResponse_Timestamp_DEFAULT
-	}
-	return *p.Timestamp
+func (p *SmsLoginResponse) GetToken() (v string) {
+	return p.Token
 }
 
 var fieldIDToName_SmsLoginResponse = map[int16]string{
 	1: "Code",
 	2: "Msg",
-	3: "AccessToken",
-	4: "ExpireAt",
-	5: "Phone",
-	6: "Timestamp",
-}
-
-func (p *SmsLoginResponse) IsSetAccessToken() bool {
-	return p.AccessToken != nil
-}
-
-func (p *SmsLoginResponse) IsSetExpireAt() bool {
-	return p.ExpireAt != nil
-}
-
-func (p *SmsLoginResponse) IsSetPhone() bool {
-	return p.Phone != nil
-}
-
-func (p *SmsLoginResponse) IsSetTimestamp() bool {
-	return p.Timestamp != nil
+	3: "Token",
 }
 
 func (p *SmsLoginResponse) Read(iprot thrift.TProtocol) (err error) {
@@ -787,6 +730,7 @@ func (p *SmsLoginResponse) Read(iprot thrift.TProtocol) (err error) {
 	var fieldId int16
 	var issetCode bool = false
 	var issetMsg bool = false
+	var issetToken bool = false
 
 	if _, err = iprot.ReadStructBegin(); err != nil {
 		goto ReadStructBeginError
@@ -825,30 +769,7 @@ func (p *SmsLoginResponse) Read(iprot thrift.TProtocol) (err error) {
 				if err = p.ReadField3(iprot); err != nil {
 					goto ReadFieldError
 				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
-				goto SkipFieldError
-			}
-		case 4:
-			if fieldTypeId == thrift.I64 {
-				if err = p.ReadField4(iprot); err != nil {
-					goto ReadFieldError
-				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
-				goto SkipFieldError
-			}
-		case 5:
-			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField5(iprot); err != nil {
-					goto ReadFieldError
-				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
-				goto SkipFieldError
-			}
-		case 6:
-			if fieldTypeId == thrift.I64 {
-				if err = p.ReadField6(iprot); err != nil {
-					goto ReadFieldError
-				}
+				issetToken = true
 			} else if err = iprot.Skip(fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
@@ -872,6 +793,11 @@ func (p *SmsLoginResponse) Read(iprot thrift.TProtocol) (err error) {
 
 	if !issetMsg {
 		fieldId = 2
+		goto RequiredFieldNotSetError
+	}
+
+	if !issetToken {
+		fieldId = 3
 		goto RequiredFieldNotSetError
 	}
 	return nil
@@ -916,46 +842,13 @@ func (p *SmsLoginResponse) ReadField2(iprot thrift.TProtocol) error {
 }
 func (p *SmsLoginResponse) ReadField3(iprot thrift.TProtocol) error {
 
-	var _field *string
+	var _field string
 	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
-		_field = &v
+		_field = v
 	}
-	p.AccessToken = _field
-	return nil
-}
-func (p *SmsLoginResponse) ReadField4(iprot thrift.TProtocol) error {
-
-	var _field *int64
-	if v, err := iprot.ReadI64(); err != nil {
-		return err
-	} else {
-		_field = &v
-	}
-	p.ExpireAt = _field
-	return nil
-}
-func (p *SmsLoginResponse) ReadField5(iprot thrift.TProtocol) error {
-
-	var _field *string
-	if v, err := iprot.ReadString(); err != nil {
-		return err
-	} else {
-		_field = &v
-	}
-	p.Phone = _field
-	return nil
-}
-func (p *SmsLoginResponse) ReadField6(iprot thrift.TProtocol) error {
-
-	var _field *int64
-	if v, err := iprot.ReadI64(); err != nil {
-		return err
-	} else {
-		_field = &v
-	}
-	p.Timestamp = _field
+	p.Token = _field
 	return nil
 }
 
@@ -975,18 +868,6 @@ func (p *SmsLoginResponse) Write(oprot thrift.TProtocol) (err error) {
 		}
 		if err = p.writeField3(oprot); err != nil {
 			fieldId = 3
-			goto WriteFieldError
-		}
-		if err = p.writeField4(oprot); err != nil {
-			fieldId = 4
-			goto WriteFieldError
-		}
-		if err = p.writeField5(oprot); err != nil {
-			fieldId = 5
-			goto WriteFieldError
-		}
-		if err = p.writeField6(oprot); err != nil {
-			fieldId = 6
 			goto WriteFieldError
 		}
 	}
@@ -1042,79 +923,20 @@ WriteFieldEndError:
 }
 
 func (p *SmsLoginResponse) writeField3(oprot thrift.TProtocol) (err error) {
-	if p.IsSetAccessToken() {
-		if err = oprot.WriteFieldBegin("AccessToken", thrift.STRING, 3); err != nil {
-			goto WriteFieldBeginError
-		}
-		if err := oprot.WriteString(*p.AccessToken); err != nil {
-			return err
-		}
-		if err = oprot.WriteFieldEnd(); err != nil {
-			goto WriteFieldEndError
-		}
+	if err = oprot.WriteFieldBegin("Token", thrift.STRING, 3); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteString(p.Token); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
 	}
 	return nil
 WriteFieldBeginError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 3 begin error: ", p), err)
 WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 3 end error: ", p), err)
-}
-
-func (p *SmsLoginResponse) writeField4(oprot thrift.TProtocol) (err error) {
-	if p.IsSetExpireAt() {
-		if err = oprot.WriteFieldBegin("ExpireAt", thrift.I64, 4); err != nil {
-			goto WriteFieldBeginError
-		}
-		if err := oprot.WriteI64(*p.ExpireAt); err != nil {
-			return err
-		}
-		if err = oprot.WriteFieldEnd(); err != nil {
-			goto WriteFieldEndError
-		}
-	}
-	return nil
-WriteFieldBeginError:
-	return thrift.PrependError(fmt.Sprintf("%T write field 4 begin error: ", p), err)
-WriteFieldEndError:
-	return thrift.PrependError(fmt.Sprintf("%T write field 4 end error: ", p), err)
-}
-
-func (p *SmsLoginResponse) writeField5(oprot thrift.TProtocol) (err error) {
-	if p.IsSetPhone() {
-		if err = oprot.WriteFieldBegin("Phone", thrift.STRING, 5); err != nil {
-			goto WriteFieldBeginError
-		}
-		if err := oprot.WriteString(*p.Phone); err != nil {
-			return err
-		}
-		if err = oprot.WriteFieldEnd(); err != nil {
-			goto WriteFieldEndError
-		}
-	}
-	return nil
-WriteFieldBeginError:
-	return thrift.PrependError(fmt.Sprintf("%T write field 5 begin error: ", p), err)
-WriteFieldEndError:
-	return thrift.PrependError(fmt.Sprintf("%T write field 5 end error: ", p), err)
-}
-
-func (p *SmsLoginResponse) writeField6(oprot thrift.TProtocol) (err error) {
-	if p.IsSetTimestamp() {
-		if err = oprot.WriteFieldBegin("Timestamp", thrift.I64, 6); err != nil {
-			goto WriteFieldBeginError
-		}
-		if err := oprot.WriteI64(*p.Timestamp); err != nil {
-			return err
-		}
-		if err = oprot.WriteFieldEnd(); err != nil {
-			goto WriteFieldEndError
-		}
-	}
-	return nil
-WriteFieldBeginError:
-	return thrift.PrependError(fmt.Sprintf("%T write field 6 begin error: ", p), err)
-WriteFieldEndError:
-	return thrift.PrependError(fmt.Sprintf("%T write field 6 end error: ", p), err)
 }
 
 func (p *SmsLoginResponse) String() string {

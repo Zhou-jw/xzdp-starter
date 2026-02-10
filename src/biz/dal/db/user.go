@@ -54,7 +54,7 @@ func GetOrCreateUserIfNotExist(phone string, hashedPwd string) (int64, bool, err
 // query User by phone
 func QueryUser(phone string) (*User, error) {
 	var user User
-	if err := DB.Where("phone = ?", phone).Find(&user).Error; err != nil {
+	if err := DB.Where("phone = ?", phone).First(&user).Error; err != nil {
 		return nil, err
 	}
 	return &user, nil

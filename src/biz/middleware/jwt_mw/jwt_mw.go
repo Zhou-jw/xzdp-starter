@@ -8,13 +8,12 @@ import (
 	"github.com/Zhou-jw/xzdp-starter/src/biz/model/api/user" // 引入你的用户模型
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/common/utils"
-	"github.com/cloudwego/hertz/pkg/protocol/consts"
 	"github.com/hertz-contrib/jwt"
 )
 
 // 全局身份Key，用于从请求上下文获取用户信息
 var (
-	IdentityKey   = "phone"
+	identity   = "phone"
 	JwtMiddleware *jwt.HertzJWTMiddleware
 )
 
@@ -26,7 +25,7 @@ func Init() {
 		Key:         []byte("xzdp_2026_jwt_secret"), // 加密密钥，生产环境用环境变量！
 		Timeout:     time.Hour,                      // Token有效期
 		MaxRefresh:  time.Hour,                      // Token最大刷新时间
-		IdentityKey: IdentityKey,
+		IdentityKey: identity,
 		
 		// 认证函数
 		Authenticator: func(ctx context.Context, c *app.RequestContext) (interface{}, error) {
@@ -37,6 +36,8 @@ func Init() {
 				return nil, err
 			}
 			
+			c.Set("user_phone", loginReq.Phone)
+
 			return loginReq.Phone, nil
 		},
 
@@ -44,36 +45,30 @@ func Init() {
 		// data is the return value of Authenticator, which is the phone number in this case
 		PayloadFunc: func(data interface{}) jwt.MapClaims {
 			// data是短信登录成功后传入的用户ID/手机号等信息
-			if v, ok := data.(string); ok {
+			if phone, ok := data.(string); ok {
 				return jwt.MapClaims{
-					IdentityKey: v, // 载荷中存入用户唯一标识（手机号/用户ID）
+					identity: phone, // 载荷中存入用户唯一标识（手机号/用户ID）
 				}
 			}
 			return jwt.MapClaims{}
 		},
 
-		// 解析JWT后，从载荷构造用户身份，存入请求上下文
-		// IdentityHandler: func(ctx context.Context, c *app.RequestContext) interface{} {
-		// 	claims := jwt.ExtractClaims(ctx, c)
-		// 	// 从载荷中获取用户唯一标识，返回（后续c.Get(IdentityKey)可获取）
-		// 	return &user.User{
-		// 		Phone: claims[IdentityKey].(string), // 从载荷中获取手机号
-		// 	}
-		// },
-
 		// token 生成成功后的响应：返回标准化JSON，包含token和过期时间
 		LoginResponse: func(ctx context.Context, c *app.RequestContext, code int, token string, expire time.Time) {
-			c.JSON(consts.StatusOK, utils.H{
-				"code":    code,
-				"token":   token,
-				"expire":  expire.Format(time.RFC3339),
-				"message": "success",
-			})
+			// add user token to redis with expiration
+			c.Set("token", token)
 		},
 
+		// 解析JWT后，从载荷构造用户身份，存入请求上下文
+		// IdentityHandler: func(ctx context.Context, c *app.RequestContext) interface{} {
+		// 	claims := ExtractClaims(ctx, c)
+		// 	return claims[identity]
+		// },
+
 		// 权限校验：按需扩展（如管理员/普通用户），暂时返回true，后续可自定义
+		// data is the return value of IdentityHandler, default is identity value from PayloadFunc
 		Authorizator: func(data interface{}, ctx context.Context, c *app.RequestContext) bool {
-			if phone, ok := data.(string); ok && phone == "admin" {
+			if _, ok := data.(string); ok {
 				return true
 			}
 			return false
