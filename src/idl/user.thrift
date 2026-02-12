@@ -47,19 +47,19 @@ struct UserMeResponse {
 // ------------------------------
 // 4. 用户核心服务定义
 // ------------------------------
-service UserService {
+service UserHandler {
     /**
      * 发送短信验证码接口
      */
-    SendCodeResponse SendCode(1: SendCodeRequest req) (api.post="/api/user/code", api.path="/api/user/code");
+    SendCodeResponse SendCode(1: SendCodeRequest req) (api.post="/api/user/code");
 
     /**
      * 短信验证码登录接口
      */
-    SmsLoginResponse SmsLogin(1: SmsLoginRequest req) (api.post="/api/user/login", api.path="/api/user/login");
+    SmsLoginResponse SmsLogin(1: SmsLoginRequest req) (api.post="/api/user/login");
 
     /**
      * 获取当前用户信息接口
      */
-    UserMeResponse UserMe(1: UserMeRequest req) (api.get="/api/user/me", api.path="/api/user/me");
+    UserMeResponse UserMe(1: UserMeRequest req) (api.get="/api/user/me");
 }

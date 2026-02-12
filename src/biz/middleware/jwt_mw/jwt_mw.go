@@ -5,6 +5,8 @@ import (
 	"log"
 	"time"
 
+	"github.com/Zhou-jw/xzdp-starter/src/biz/dal/db"
+	"github.com/Zhou-jw/xzdp-starter/src/biz/middleware/redis"
 	"github.com/Zhou-jw/xzdp-starter/src/biz/model/api/user" // 引入你的用户模型
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/common/utils"
@@ -13,20 +15,20 @@ import (
 
 // 全局身份Key，用于从请求上下文获取用户信息
 var (
-	identity   = "phone"
+	identity      = "phone"
 	JwtMiddleware *jwt.HertzJWTMiddleware
 )
 
 // 初始化JWT中间件，返回全局的JWT中间件实例
 func Init() {
 	var err error
-	JwtMiddleware ,err = jwt.New(&jwt.HertzJWTMiddleware{
+	JwtMiddleware, err = jwt.New(&jwt.HertzJWTMiddleware{
 		Realm:       "xzdp-starter",                 // 认证域，自定义即可
 		Key:         []byte("xzdp_2026_jwt_secret"), // 加密密钥，生产环境用环境变量！
 		Timeout:     time.Hour,                      // Token有效期
 		MaxRefresh:  time.Hour,                      // Token最大刷新时间
 		IdentityKey: identity,
-		
+
 		// 认证函数
 		Authenticator: func(ctx context.Context, c *app.RequestContext) (interface{}, error) {
 			var loginReq user.SmsLoginRequest
@@ -35,7 +37,26 @@ func Init() {
 				log.Printf("Authenticator error in jwt")
 				return nil, err
 			}
-			
+
+			// check sms code
+			log.Println("Checking SMS code for phone:", loginReq.Phone, "code:", loginReq.SmsCode)
+			valid, err := redis.CheckSmsCode(loginReq.Phone, loginReq.SmsCode)
+			if err != nil {
+				log.Printf("Error checking SMS code: %v", err)
+				return nil, err
+			}
+			if !valid {
+				log.Printf("Invalid SMS code for phone: %s", loginReq.Phone)
+				return nil, jwt.ErrFailedAuthentication
+			}
+
+			user_id, _, err := db.GetOrCreateUserIfNotExist(loginReq.Phone, "")
+			if err != nil {
+				log.Printf("Error querying user: %v", err)
+				return nil, err
+			}
+
+			c.Set("current_user_id", user_id)
 			c.Set("user_phone", loginReq.Phone)
 
 			return loginReq.Phone, nil

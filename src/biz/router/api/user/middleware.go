@@ -36,5 +36,7 @@ func _smsloginMw() []app.HandlerFunc {
 
 func _usermeMw() []app.HandlerFunc {
 	// your code...
-	return nil
+	return []app.HandlerFunc{
+		jwtmw.JwtMiddleware.MiddlewareFunc(),
+	}
 }

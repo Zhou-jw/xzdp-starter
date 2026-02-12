@@ -10,6 +10,9 @@ import (
 	"github.com/Zhou-jw/xzdp-starter/src/biz/dal/db"
 	"github.com/Zhou-jw/xzdp-starter/src/biz/middleware/redis"
 	user "github.com/Zhou-jw/xzdp-starter/src/biz/model/api/user"
+	service "github.com/Zhou-jw/xzdp-starter/src/biz/service/user"
+	"github.com/Zhou-jw/xzdp-starter/src/pkg/errno"
+	"github.com/Zhou-jw/xzdp-starter/src/pkg/utils"
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
 )
@@ -83,7 +86,12 @@ func UserMe(ctx context.Context, c *app.RequestContext) {
 	var req user.UserMeRequest
 	err = c.BindAndValidate(&req)
 	if err != nil {
-		c.String(consts.StatusBadRequest, err.Error())
+		resp := utils.BuildBaseResp(err)
+
+		c.JSON(consts.StatusOK, user.UserMeResponse{
+			Code: resp.StatusCode,
+			Msg:  resp.StatusMsg,
+		})
 		return
 	}
 
