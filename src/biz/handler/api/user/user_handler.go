@@ -95,10 +95,12 @@ func UserMe(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	dbUser, err := db.QueryUser(req.Phone)
+	u, err := service.NewUserService(ctx, c).UserInfo(&req)
 
-	resp := new(user.UserMeResponse)
-	resp.Phone = dbUser.Phone
-
-	c.JSON(consts.StatusOK, resp)
+	resp := utils.BuildBaseResp(err)
+	c.JSON(consts.StatusOK, user.UserMeResponse{
+		Code:  resp.StatusCode,
+		Msg:   resp.StatusMsg,
+		Phone: u.Phone,
+	})
 }

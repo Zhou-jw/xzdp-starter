@@ -13,8 +13,6 @@ var (
 	rdb *redis.Client
 )
 
-
-
 func InitRedis() {
 	rdb = redis.NewClient(&redis.Options{
 		Addr:     constants.RedisAddr,

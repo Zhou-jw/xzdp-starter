@@ -30,7 +30,7 @@ func Init() {
 		IdentityKey: identity,
 
 		// 认证函数
-		Authenticator: func(ctx context.Context, c *app.RequestContext) (interface{}, error) {
+		Authenticator: func(ctx context.Context, c *app.RequestContext) (any, error) {
 			var loginReq user.SmsLoginRequest
 			err := c.BindAndValidate(&loginReq)
 			if err != nil {
@@ -57,14 +57,14 @@ func Init() {
 			}
 
 			c.Set("current_user_id", user_id)
-			c.Set("user_phone", loginReq.Phone)
+			c.Set("current_user_phone", loginReq.Phone)
 
 			return loginReq.Phone, nil
 		},
 
 		// Payload构造：将用户信息存入JWT载荷
 		// data is the return value of Authenticator, which is the phone number in this case
-		PayloadFunc: func(data interface{}) jwt.MapClaims {
+		PayloadFunc: func(data any) jwt.MapClaims {
 			// data是短信登录成功后传入的用户ID/手机号等信息
 			if phone, ok := data.(string); ok {
 				return jwt.MapClaims{
@@ -88,8 +88,9 @@ func Init() {
 
 		// 权限校验：按需扩展（如管理员/普通用户），暂时返回true，后续可自定义
 		// data is the return value of IdentityHandler, default is identity value from PayloadFunc
-		Authorizator: func(data interface{}, ctx context.Context, c *app.RequestContext) bool {
-			if _, ok := data.(string); ok {
+		Authorizator: func(data any, ctx context.Context, c *app.RequestContext) bool {
+			if phone, ok := data.(string); ok {
+				c.Set("current_user_phone", phone)
 				return true
 			}
 			return false

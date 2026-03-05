@@ -949,8 +949,9 @@ func (p *SmsLoginResponse) String() string {
 
 // 2.3 获取当前用户信息
 type UserMeRequest struct {
+	UserID int64 `thrift:"user_id,1" form:"user_id" json:"user_id" query:"user_id"`
 	// JWT令牌（请求头）
-	Token *string `thrift:"Token,1,optional" header:"Authorization" json:"Token,omitempty"`
+	Token string `thrift:"Token,2" header:"Authorization" json:"Token"`
 }
 
 func NewUserMeRequest() *UserMeRequest {
@@ -960,21 +961,17 @@ func NewUserMeRequest() *UserMeRequest {
 func (p *UserMeRequest) InitDefault() {
 }
 
-var UserMeRequest_Token_DEFAULT string
+func (p *UserMeRequest) GetUserID() (v int64) {
+	return p.UserID
+}
 
 func (p *UserMeRequest) GetToken() (v string) {
-	if !p.IsSetToken() {
-		return UserMeRequest_Token_DEFAULT
-	}
-	return *p.Token
+	return p.Token
 }
 
 var fieldIDToName_UserMeRequest = map[int16]string{
-	1: "Token",
-}
-
-func (p *UserMeRequest) IsSetToken() bool {
-	return p.Token != nil
+	1: "user_id",
+	2: "Token",
 }
 
 func (p *UserMeRequest) Read(iprot thrift.TProtocol) (err error) {
@@ -997,8 +994,16 @@ func (p *UserMeRequest) Read(iprot thrift.TProtocol) (err error) {
 
 		switch fieldId {
 		case 1:
-			if fieldTypeId == thrift.STRING {
+			if fieldTypeId == thrift.I64 {
 				if err = p.ReadField1(iprot); err != nil {
+					goto ReadFieldError
+				}
+			} else if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
+		case 2:
+			if fieldTypeId == thrift.STRING {
+				if err = p.ReadField2(iprot); err != nil {
 					goto ReadFieldError
 				}
 			} else if err = iprot.Skip(fieldTypeId); err != nil {
@@ -1035,11 +1040,22 @@ ReadStructEndError:
 
 func (p *UserMeRequest) ReadField1(iprot thrift.TProtocol) error {
 
-	var _field *string
+	var _field int64
+	if v, err := iprot.ReadI64(); err != nil {
+		return err
+	} else {
+		_field = v
+	}
+	p.UserID = _field
+	return nil
+}
+func (p *UserMeRequest) ReadField2(iprot thrift.TProtocol) error {
+
+	var _field string
 	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
-		_field = &v
+		_field = v
 	}
 	p.Token = _field
 	return nil
@@ -1053,6 +1069,10 @@ func (p *UserMeRequest) Write(oprot thrift.TProtocol) (err error) {
 	if p != nil {
 		if err = p.writeField1(oprot); err != nil {
 			fieldId = 1
+			goto WriteFieldError
+		}
+		if err = p.writeField2(oprot); err != nil {
+			fieldId = 2
 			goto WriteFieldError
 		}
 	}
@@ -1074,22 +1094,37 @@ WriteStructEndError:
 }
 
 func (p *UserMeRequest) writeField1(oprot thrift.TProtocol) (err error) {
-	if p.IsSetToken() {
-		if err = oprot.WriteFieldBegin("Token", thrift.STRING, 1); err != nil {
-			goto WriteFieldBeginError
-		}
-		if err := oprot.WriteString(*p.Token); err != nil {
-			return err
-		}
-		if err = oprot.WriteFieldEnd(); err != nil {
-			goto WriteFieldEndError
-		}
+	if err = oprot.WriteFieldBegin("user_id", thrift.I64, 1); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteI64(p.UserID); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
 	}
 	return nil
 WriteFieldBeginError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 begin error: ", p), err)
 WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
+}
+
+func (p *UserMeRequest) writeField2(oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin("Token", thrift.STRING, 2); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteString(p.Token); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 2 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 2 end error: ", p), err)
 }
 
 func (p *UserMeRequest) String() string {
@@ -1106,7 +1141,7 @@ type UserMeResponse struct {
 	// 提示信息
 	Msg string `thrift:"Msg,2,required" form:"Msg,required" json:"Msg,required" query:"Msg,required"`
 	// 当前登录用户手机号（核心标识）
-	Phone *string `thrift:"Phone,3,optional" form:"Phone" json:"Phone,omitempty" query:"Phone"`
+	Phone string `thrift:"Phone,3" form:"Phone" json:"Phone" query:"Phone"`
 	// 可选扩展：如需其他基础信息，直接添加字符串字段，无需结构体
 	// 4: optional string NickName;
 	// 5: optional string Avatar;
@@ -1133,13 +1168,8 @@ func (p *UserMeResponse) GetMsg() (v string) {
 	return p.Msg
 }
 
-var UserMeResponse_Phone_DEFAULT string
-
 func (p *UserMeResponse) GetPhone() (v string) {
-	if !p.IsSetPhone() {
-		return UserMeResponse_Phone_DEFAULT
-	}
-	return *p.Phone
+	return p.Phone
 }
 
 var UserMeResponse_Timestamp_DEFAULT int64
@@ -1156,10 +1186,6 @@ var fieldIDToName_UserMeResponse = map[int16]string{
 	2: "Msg",
 	3: "Phone",
 	4: "Timestamp",
-}
-
-func (p *UserMeResponse) IsSetPhone() bool {
-	return p.Phone != nil
 }
 
 func (p *UserMeResponse) IsSetTimestamp() bool {
@@ -1285,11 +1311,11 @@ func (p *UserMeResponse) ReadField2(iprot thrift.TProtocol) error {
 }
 func (p *UserMeResponse) ReadField3(iprot thrift.TProtocol) error {
 
-	var _field *string
+	var _field string
 	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
-		_field = &v
+		_field = v
 	}
 	p.Phone = _field
 	return nil
@@ -1381,16 +1407,14 @@ WriteFieldEndError:
 }
 
 func (p *UserMeResponse) writeField3(oprot thrift.TProtocol) (err error) {
-	if p.IsSetPhone() {
-		if err = oprot.WriteFieldBegin("Phone", thrift.STRING, 3); err != nil {
-			goto WriteFieldBeginError
-		}
-		if err := oprot.WriteString(*p.Phone); err != nil {
-			return err
-		}
-		if err = oprot.WriteFieldEnd(); err != nil {
-			goto WriteFieldEndError
-		}
+	if err = oprot.WriteFieldBegin("Phone", thrift.STRING, 3); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteString(p.Phone); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
 	}
 	return nil
 WriteFieldBeginError:

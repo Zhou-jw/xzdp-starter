@@ -31,13 +31,14 @@ struct SmsLoginResponse {
 
 // 2.3 获取当前用户信息
 struct UserMeRequest {
-    1: optional string Token (api.header="Authorization"); // JWT令牌（请求头）
+    1: i64 user_id;
+    2: string Token (api.header="Authorization"); // JWT令牌（请求头）
 }
 
 struct UserMeResponse {
     1: required i32 Code = 200;             // 状态码
     2: required string Msg = "ok";          // 提示信息
-    3: optional string Phone;                     // 当前登录用户手机号（核心标识）
+    3: string Phone;                     // 当前登录用户手机号（核心标识）
     // 可选扩展：如需其他基础信息，直接添加字符串字段，无需结构体
     // 4: optional string NickName;
     // 5: optional string Avatar;

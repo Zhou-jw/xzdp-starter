@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/Zhou-jw/xzdp-starter/src/pkg/constants"
+	"github.com/Zhou-jw/xzdp-starter/src/pkg/errno"
 )
 
 type User struct {
@@ -55,6 +56,19 @@ func GetOrCreateUserIfNotExist(phone string, hashedPwd string) (int64, bool, err
 func QueryUser(phone string) (*User, error) {
 	var user User
 	if err := DB.Where("phone = ?", phone).First(&user).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+// QueryUserById get user in the database by user id
+func QueryUserById(user_id int64) (*User, error) {
+	var user User
+	if err := DB.Where("id = ?", user_id).Find(&user).Error; err != nil {
+		return nil, err
+	}
+	if user == (User{}) {
+		err := errno.UserIsNotExistErr
 		return nil, err
 	}
 	return &user, nil
