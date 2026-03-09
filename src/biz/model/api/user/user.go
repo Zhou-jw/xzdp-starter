@@ -691,7 +691,9 @@ type SmsLoginResponse struct {
 	// 提示信息
 	Msg string `thrift:"Msg,2,required" form:"Msg,required" json:"Msg,required" query:"Msg,required"`
 	// JWT访问令牌（核心）
-	Token string `thrift:"Token,3,required" form:"Token,required" json:"Token,required" query:"Token,required"`
+	Token   string `thrift:"Token,3,required" form:"Token,required" json:"Token,required" query:"Token,required"`
+	UserID  int64  `thrift:"user_id,4,required" form:"user_id,required" json:"user_id,required" query:"user_id,required"`
+	Success bool   `thrift:"success,5,required" form:"success,required" json:"success,required" query:"success,required"`
 }
 
 func NewSmsLoginResponse() *SmsLoginResponse {
@@ -718,10 +720,20 @@ func (p *SmsLoginResponse) GetToken() (v string) {
 	return p.Token
 }
 
+func (p *SmsLoginResponse) GetUserID() (v int64) {
+	return p.UserID
+}
+
+func (p *SmsLoginResponse) GetSuccess() (v bool) {
+	return p.Success
+}
+
 var fieldIDToName_SmsLoginResponse = map[int16]string{
 	1: "Code",
 	2: "Msg",
 	3: "Token",
+	4: "user_id",
+	5: "success",
 }
 
 func (p *SmsLoginResponse) Read(iprot thrift.TProtocol) (err error) {
@@ -731,6 +743,8 @@ func (p *SmsLoginResponse) Read(iprot thrift.TProtocol) (err error) {
 	var issetCode bool = false
 	var issetMsg bool = false
 	var issetToken bool = false
+	var issetUserID bool = false
+	var issetSuccess bool = false
 
 	if _, err = iprot.ReadStructBegin(); err != nil {
 		goto ReadStructBeginError
@@ -773,6 +787,24 @@ func (p *SmsLoginResponse) Read(iprot thrift.TProtocol) (err error) {
 			} else if err = iprot.Skip(fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
+		case 4:
+			if fieldTypeId == thrift.I64 {
+				if err = p.ReadField4(iprot); err != nil {
+					goto ReadFieldError
+				}
+				issetUserID = true
+			} else if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
+		case 5:
+			if fieldTypeId == thrift.BOOL {
+				if err = p.ReadField5(iprot); err != nil {
+					goto ReadFieldError
+				}
+				issetSuccess = true
+			} else if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
 		default:
 			if err = iprot.Skip(fieldTypeId); err != nil {
 				goto SkipFieldError
@@ -798,6 +830,16 @@ func (p *SmsLoginResponse) Read(iprot thrift.TProtocol) (err error) {
 
 	if !issetToken {
 		fieldId = 3
+		goto RequiredFieldNotSetError
+	}
+
+	if !issetUserID {
+		fieldId = 4
+		goto RequiredFieldNotSetError
+	}
+
+	if !issetSuccess {
+		fieldId = 5
 		goto RequiredFieldNotSetError
 	}
 	return nil
@@ -851,6 +893,28 @@ func (p *SmsLoginResponse) ReadField3(iprot thrift.TProtocol) error {
 	p.Token = _field
 	return nil
 }
+func (p *SmsLoginResponse) ReadField4(iprot thrift.TProtocol) error {
+
+	var _field int64
+	if v, err := iprot.ReadI64(); err != nil {
+		return err
+	} else {
+		_field = v
+	}
+	p.UserID = _field
+	return nil
+}
+func (p *SmsLoginResponse) ReadField5(iprot thrift.TProtocol) error {
+
+	var _field bool
+	if v, err := iprot.ReadBool(); err != nil {
+		return err
+	} else {
+		_field = v
+	}
+	p.Success = _field
+	return nil
+}
 
 func (p *SmsLoginResponse) Write(oprot thrift.TProtocol) (err error) {
 	var fieldId int16
@@ -868,6 +932,14 @@ func (p *SmsLoginResponse) Write(oprot thrift.TProtocol) (err error) {
 		}
 		if err = p.writeField3(oprot); err != nil {
 			fieldId = 3
+			goto WriteFieldError
+		}
+		if err = p.writeField4(oprot); err != nil {
+			fieldId = 4
+			goto WriteFieldError
+		}
+		if err = p.writeField5(oprot); err != nil {
+			fieldId = 5
 			goto WriteFieldError
 		}
 	}
@@ -937,6 +1009,40 @@ WriteFieldBeginError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 3 begin error: ", p), err)
 WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 3 end error: ", p), err)
+}
+
+func (p *SmsLoginResponse) writeField4(oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin("user_id", thrift.I64, 4); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteI64(p.UserID); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 4 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 4 end error: ", p), err)
+}
+
+func (p *SmsLoginResponse) writeField5(oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin("success", thrift.BOOL, 5); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteBool(p.Success); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 5 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 5 end error: ", p), err)
 }
 
 func (p *SmsLoginResponse) String() string {
@@ -1140,12 +1246,15 @@ type UserMeResponse struct {
 	Code int32 `thrift:"Code,1,required" form:"Code,required" json:"Code,required" query:"Code,required"`
 	// 提示信息
 	Msg string `thrift:"Msg,2,required" form:"Msg,required" json:"Msg,required" query:"Msg,required"`
+	// 用户ID
+	ID int64 `thrift:"id,3" form:"id" json:"id" query:"id"`
 	// 当前登录用户手机号（核心标识）
-	Phone string `thrift:"Phone,3" form:"Phone" json:"Phone" query:"Phone"`
+	Phone string `thrift:"Phone,4" form:"Phone" json:"Phone" query:"Phone"`
 	// 可选扩展：如需其他基础信息，直接添加字符串字段，无需结构体
 	// 4: optional string NickName;
 	// 5: optional string Avatar;
-	Timestamp *int64 `thrift:"Timestamp,4,optional" form:"Timestamp" json:"Timestamp,omitempty" query:"Timestamp"`
+	// 4: optional i64 Timestamp;                    // 响应时间戳
+	Success bool `thrift:"success,5,required" form:"success,required" json:"success,required" query:"success,required"`
 }
 
 func NewUserMeResponse() *UserMeResponse {
@@ -1168,28 +1277,24 @@ func (p *UserMeResponse) GetMsg() (v string) {
 	return p.Msg
 }
 
+func (p *UserMeResponse) GetID() (v int64) {
+	return p.ID
+}
+
 func (p *UserMeResponse) GetPhone() (v string) {
 	return p.Phone
 }
 
-var UserMeResponse_Timestamp_DEFAULT int64
-
-func (p *UserMeResponse) GetTimestamp() (v int64) {
-	if !p.IsSetTimestamp() {
-		return UserMeResponse_Timestamp_DEFAULT
-	}
-	return *p.Timestamp
+func (p *UserMeResponse) GetSuccess() (v bool) {
+	return p.Success
 }
 
 var fieldIDToName_UserMeResponse = map[int16]string{
 	1: "Code",
 	2: "Msg",
-	3: "Phone",
-	4: "Timestamp",
-}
-
-func (p *UserMeResponse) IsSetTimestamp() bool {
-	return p.Timestamp != nil
+	3: "id",
+	4: "Phone",
+	5: "success",
 }
 
 func (p *UserMeResponse) Read(iprot thrift.TProtocol) (err error) {
@@ -1198,6 +1303,7 @@ func (p *UserMeResponse) Read(iprot thrift.TProtocol) (err error) {
 	var fieldId int16
 	var issetCode bool = false
 	var issetMsg bool = false
+	var issetSuccess bool = false
 
 	if _, err = iprot.ReadStructBegin(); err != nil {
 		goto ReadStructBeginError
@@ -1232,7 +1338,7 @@ func (p *UserMeResponse) Read(iprot thrift.TProtocol) (err error) {
 				goto SkipFieldError
 			}
 		case 3:
-			if fieldTypeId == thrift.STRING {
+			if fieldTypeId == thrift.I64 {
 				if err = p.ReadField3(iprot); err != nil {
 					goto ReadFieldError
 				}
@@ -1240,10 +1346,19 @@ func (p *UserMeResponse) Read(iprot thrift.TProtocol) (err error) {
 				goto SkipFieldError
 			}
 		case 4:
-			if fieldTypeId == thrift.I64 {
+			if fieldTypeId == thrift.STRING {
 				if err = p.ReadField4(iprot); err != nil {
 					goto ReadFieldError
 				}
+			} else if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
+		case 5:
+			if fieldTypeId == thrift.BOOL {
+				if err = p.ReadField5(iprot); err != nil {
+					goto ReadFieldError
+				}
+				issetSuccess = true
 			} else if err = iprot.Skip(fieldTypeId); err != nil {
 				goto SkipFieldError
 			}
@@ -1267,6 +1382,11 @@ func (p *UserMeResponse) Read(iprot thrift.TProtocol) (err error) {
 
 	if !issetMsg {
 		fieldId = 2
+		goto RequiredFieldNotSetError
+	}
+
+	if !issetSuccess {
+		fieldId = 5
 		goto RequiredFieldNotSetError
 	}
 	return nil
@@ -1311,6 +1431,17 @@ func (p *UserMeResponse) ReadField2(iprot thrift.TProtocol) error {
 }
 func (p *UserMeResponse) ReadField3(iprot thrift.TProtocol) error {
 
+	var _field int64
+	if v, err := iprot.ReadI64(); err != nil {
+		return err
+	} else {
+		_field = v
+	}
+	p.ID = _field
+	return nil
+}
+func (p *UserMeResponse) ReadField4(iprot thrift.TProtocol) error {
+
 	var _field string
 	if v, err := iprot.ReadString(); err != nil {
 		return err
@@ -1320,15 +1451,15 @@ func (p *UserMeResponse) ReadField3(iprot thrift.TProtocol) error {
 	p.Phone = _field
 	return nil
 }
-func (p *UserMeResponse) ReadField4(iprot thrift.TProtocol) error {
+func (p *UserMeResponse) ReadField5(iprot thrift.TProtocol) error {
 
-	var _field *int64
-	if v, err := iprot.ReadI64(); err != nil {
+	var _field bool
+	if v, err := iprot.ReadBool(); err != nil {
 		return err
 	} else {
-		_field = &v
+		_field = v
 	}
-	p.Timestamp = _field
+	p.Success = _field
 	return nil
 }
 
@@ -1352,6 +1483,10 @@ func (p *UserMeResponse) Write(oprot thrift.TProtocol) (err error) {
 		}
 		if err = p.writeField4(oprot); err != nil {
 			fieldId = 4
+			goto WriteFieldError
+		}
+		if err = p.writeField5(oprot); err != nil {
+			fieldId = 5
 			goto WriteFieldError
 		}
 	}
@@ -1407,10 +1542,10 @@ WriteFieldEndError:
 }
 
 func (p *UserMeResponse) writeField3(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("Phone", thrift.STRING, 3); err != nil {
+	if err = oprot.WriteFieldBegin("id", thrift.I64, 3); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Phone); err != nil {
+	if err := oprot.WriteI64(p.ID); err != nil {
 		return err
 	}
 	if err = oprot.WriteFieldEnd(); err != nil {
@@ -1424,22 +1559,37 @@ WriteFieldEndError:
 }
 
 func (p *UserMeResponse) writeField4(oprot thrift.TProtocol) (err error) {
-	if p.IsSetTimestamp() {
-		if err = oprot.WriteFieldBegin("Timestamp", thrift.I64, 4); err != nil {
-			goto WriteFieldBeginError
-		}
-		if err := oprot.WriteI64(*p.Timestamp); err != nil {
-			return err
-		}
-		if err = oprot.WriteFieldEnd(); err != nil {
-			goto WriteFieldEndError
-		}
+	if err = oprot.WriteFieldBegin("Phone", thrift.STRING, 4); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteString(p.Phone); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
 	}
 	return nil
 WriteFieldBeginError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 4 begin error: ", p), err)
 WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 4 end error: ", p), err)
+}
+
+func (p *UserMeResponse) writeField5(oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin("success", thrift.BOOL, 5); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteBool(p.Success); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 5 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 5 end error: ", p), err)
 }
 
 func (p *UserMeResponse) String() string {

@@ -51,6 +51,11 @@ docker-compose logs -f mysql
 docker exec -it xzdp-nginx nginx -s reload
 ```
 
+输入以下命令进入mysql
+```
+docker exec -it xzdp-mysql mysql -uroot xzdp
+```
+
 2. 安装herzt框架
 
 ```shell
@@ -64,4 +69,8 @@ cd src
 hz new 
 # 更新mod, go.mod 中添加需要忽略的文件夹 ignore ./data
 go mod tidy
+```
+### Nginx
+```
+Windows 浏览器 → localhost:8080（IPv4）→ WSL2 Docker Nginx 容器 → [::1]:8081（IPv6）→ Hertz 后端
 ```

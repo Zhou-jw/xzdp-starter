@@ -27,6 +27,8 @@ struct SmsLoginResponse {
     1: required i32 Code = 200;             // 状态码
     2: required string Msg = "ok";          // 提示信息
     3: required string Token;               // JWT访问令牌（核心）
+    4: required i64 user_id;
+    5: required bool success;
 }
 
 // 2.3 获取当前用户信息
@@ -38,11 +40,13 @@ struct UserMeRequest {
 struct UserMeResponse {
     1: required i32 Code = 200;             // 状态码
     2: required string Msg = "ok";          // 提示信息
-    3: string Phone;                     // 当前登录用户手机号（核心标识）
+    3: i64 id;                               // 用户ID
+    4: string Phone;                     // 当前登录用户手机号（核心标识）
     // 可选扩展：如需其他基础信息，直接添加字符串字段，无需结构体
     // 4: optional string NickName;
     // 5: optional string Avatar;
-    4: optional i64 Timestamp;                    // 响应时间戳
+    // 4: optional i64 Timestamp;                    // 响应时间戳
+    5: required bool success;
 }
 
 // ------------------------------

@@ -4,14 +4,16 @@ package user
 
 import (
 	"context"
-
 	"log"
 
-	"github.com/Zhou-jw/xzdp-starter/src/biz/dal/db"
+	// "log"
+
+	// "github.com/Zhou-jw/xzdp-starter/src/biz/dal/db"
 	"github.com/Zhou-jw/xzdp-starter/src/biz/middleware/redis"
 	user "github.com/Zhou-jw/xzdp-starter/src/biz/model/api/user"
 	service "github.com/Zhou-jw/xzdp-starter/src/biz/service/user"
-	"github.com/Zhou-jw/xzdp-starter/src/pkg/errno"
+
+	// "github.com/Zhou-jw/xzdp-starter/src/pkg/errno"
 	"github.com/Zhou-jw/xzdp-starter/src/pkg/utils"
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
@@ -35,48 +37,25 @@ func SendCode(ctx context.Context, c *app.RequestContext) {
 	verifyCode := "987654"
 	redis.AddSmsCode(req.Phone, verifyCode)
 
-	resp := &user.SendCodeResponse{
+	c.JSON(consts.StatusOK, user.SendCodeResponse{
 		Code: consts.StatusOK,          // 200成功码
 		Msg:  "Code sent successfully", // 提示信息
 		Data: verifyCode,
-	}
-
-	c.JSON(consts.StatusOK, resp)
+	})
 }
 
 // SmsLogin .
 // @router /api/user/login [POST]
 func SmsLogin(ctx context.Context, c *app.RequestContext) {
-	var req user.SmsLoginRequest
-	err := c.BindAndValidate(&req)
-	if err != nil {
-		resp := &user.SmsLoginResponse{
-			Code: consts.StatusBadRequest, // 400错误码
-			Msg:  err.Error(),             // 错误信息
-		}
-		c.JSON(consts.StatusBadRequest, resp)
-		return
-	}
-
-	// check sms code
-	valid, _ := checkSmsCode(req.Phone, req.SmsCode)
-	if !valid {
-		c.String(consts.StatusUnauthorized, "Invalid SMS code")
-		return
-	}
-
 	token := c.GetString("token")
+	user_id := c.GetInt64("current_user_id")
 	c.JSON(consts.StatusOK, user.SmsLoginResponse{
-		Code:  consts.StatusOK,
-		Msg:   "Login successful",
-		Token: token,
+		Code:    consts.StatusOK,
+		Msg:     "Login successful",
+		Token:   token,
+		UserID:  user_id,
+		Success: true,
 	})
-}
-
-func checkSmsCode(phone string, code string) (bool, error) {
-	log.Println("Checking SMS code for phone:", phone, "code:", code)
-	valid, err := redis.CheckSmsCode(phone, code)
-	return valid, err
 }
 
 // UserMe .
@@ -89,18 +68,22 @@ func UserMe(ctx context.Context, c *app.RequestContext) {
 		resp := utils.BuildBaseResp(err)
 
 		c.JSON(consts.StatusOK, user.UserMeResponse{
-			Code: resp.StatusCode,
-			Msg:  resp.StatusMsg,
+			Code:    resp.StatusCode,
+			Msg:     resp.StatusMsg,
+			Success: false,
 		})
 		return
 	}
 
 	u, err := service.NewUserService(ctx, c).UserInfo(&req)
+	log.Printf("/user/me: user id:%d", u.ID)
 
 	resp := utils.BuildBaseResp(err)
 	c.JSON(consts.StatusOK, user.UserMeResponse{
-		Code:  resp.StatusCode,
-		Msg:   resp.StatusMsg,
-		Phone: u.Phone,
+		Code:    resp.StatusCode,
+		Msg:     resp.StatusMsg,
+		Phone:   u.Phone,
+		ID:      u.ID,
+		Success: true,
 	})
 }

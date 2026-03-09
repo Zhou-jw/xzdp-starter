@@ -4,47 +4,58 @@ package main
 
 import (
 	"context"
+	"log"
 
 	config "github.com/Zhou-jw/xzdp-starter/config"
+	"github.com/Zhou-jw/xzdp-starter/src/biz/dal"
+	jwt_mw "github.com/Zhou-jw/xzdp-starter/src/biz/middleware/jwt_mw"
 	app "github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/app/server"
-	jwt_mw "github.com/Zhou-jw/xzdp-starter/src/biz/middleware/jwt_mw"
 )
 
 func Init() {
-	jwt_mw.Init();
+	dal.Init()
+	jwt_mw.Init()
 }
 
 func main() {
 	h := server.Default(server.WithHostPorts(config.GetConf().Hertz.Address))
+	log.Printf("hertz address: %s", config.GetConf().Hertz.Address)
 	Init()
 
-	excludedPaths := []string{
-		"/shop",
-		"/voucher",
-		"/shop-type",
-		"/upload",
-		"/blog/hot",
-		"/user/code",
-		"/user/login",
-		"/follow",
-		"/imgs",
-		"/message",
-		"/blog",
-	}
+	// excludedPaths := []string{
+	// 	"/shop",
+	// 	"/voucher",
+	// 	"/shop-type",
+	// 	"/upload",
+	// 	"/blog/hot",
+	// 	"/user/code",
+	// 	"/user/login",
+	// 	"/follow",
+	// 	"/imgs",
+	// 	"/message",
+	// 	"/blog",
+	// }
 
-	h.Use(func(ctx context.Context, c *app.RequestContext) {
-		path := string(c.Request.Path())
-		for i := 0; i < len(excludedPaths); i++ {
-			if len(path) < len(excludedPaths[i]) {
-				continue
-			}
-			if path[:len(excludedPaths[i])] == excludedPaths[i] {
-				return
-			}
-		}
+	// h.Use(func(ctx context.Context, c *app.RequestContext) {
+	// 	path := string(c.Request.Path())
+	// 	for i := range excludedPaths {
+	// 		if len(path) < len(excludedPaths[i]) {
+	// 			continue
+	// 		}
+	// 		if path[:len(excludedPaths[i])] == excludedPaths[i] {
+	// 			return
+	// 		}
+	// 	}
+	// })
+	// 🌟 新增测试路由（最简，无分组）
+	h.POST("/test", func(c context.Context, ctx *app.RequestContext) {
+		ctx.JSON(200, map[string]string{"msg": "测试成功"})
 	})
 
 	register(h)
+	for _, route := range h.Routes() {
+		println("路由：", route.Method, route.Path)
+	}
 	h.Spin()
 }
