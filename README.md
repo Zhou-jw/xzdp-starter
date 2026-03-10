@@ -54,6 +54,9 @@ docker exec -it xzdp-nginx nginx -s reload
 输入以下命令进入mysql
 ```
 docker exec -it xzdp-mysql mysql -uroot xzdp
+docker cp ./scripts/xzdp.sql xzdp-mysql:/tmp/
+# 初始化mysql
+source /tmp/xzdp.sql
 ```
 
 2. 安装herzt框架

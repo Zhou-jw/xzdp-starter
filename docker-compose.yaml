@@ -17,7 +17,7 @@ services:
       # 数据持久化：主机相对路径（与docker-compose.yml同目录），无需手动创建/home目录
       - ./data/mysql:/var/lib/mysql
       # 初始化脚本：首次启动自动执行，无则可注释这一行
-      # - ./script/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./scripts/xzdp.sql:/docker-entrypoint-initdb.d/xzdp.sql
     restart: on-failure  # 失败自动重启
     command: --default-authentication-plugin=mysql_native_password  # 保持兼容性
 
@@ -51,10 +51,10 @@ services:
     volumes:
       # 核心挂载1：前端项目代码目录（主机→容器）
       # 替换为【你的本地前端项目根目录】，容器内/usr/share/nginx/html是Nginx默认静态资源目录
-      - /home/code/xzdp-starter/frontend/nginx-1.18.0/html:/usr/share/nginx/html
+      - ./frontend/nginx-1.18.0/html:/usr/share/nginx/html
       # 核心挂载2：自定义Nginx配置文件（主机→容器），替代本地-c参数
       # 替换为【你的本地nginx.conf绝对路径】，容器内/etc/nginx/nginx.conf是默认配置文件路径
-      - /home/code/xzdp-starter/frontend/nginx-1.18.0/conf/nginx.conf:/etc/nginx/nginx.conf
+      - ./frontend/nginx-1.18.0/conf/nginx.conf:/etc/nginx/nginx.conf
       # 可选挂载：Nginx日志目录（主机→容器），方便本地查看日志
       - ./data/nginx/logs:/var/log/nginx
     # 重启策略：与其他服务一致，失败自动重启
@@ -63,3 +63,43 @@ services:
     depends_on:
       - mysql
       - redis
+  rocketmq-namesrv:
+    image: apache/rocketmq:5.2.0  # 稳定版，适配个人项目
+    container_name: xzdp-rocketmq-namesrv
+    ports:
+      - "9876:9876"  # RocketMQ默认端口，无需修改
+    environment:
+      TZ: Asia/Shanghai
+      # 简化配置：无密码、默认内存（个人项目无需调优）
+      NAMESRV_MEM: "-Xms256m -Xmx256m"  # 低配内存，适配个人服务器/本地
+    volumes:
+      - ./data/rocketmq/namesrv/logs:/home/rocketmq/logs  # 日志持久化
+    restart: on-failure
+    command: sh mqnamesrv  # 启动NameServer
+
+  # ======== 新增 RocketMQ 组件：Broker（核心消息节点） ========
+  rocketmq-broker:
+    image: apache/rocketmq:5.2.0
+    container_name: xzdp-rocketmq-broker
+    ports:
+      - "10911:10911"  # Broker默认端口
+      - "10909:10909"  # Broker通信端口
+    environment:
+      TZ: Asia/Shanghai
+      # 核心配置：指定NameServer地址（容器内直接访问namesrv容器）
+      NAMESRV_ADDR: "rocketmq-namesrv:9876"
+      # 简化配置：低配内存、无密码
+      BROKER_MEM: "-Xms512m -Xmx512m"
+      # 自定义Broker名称，方便识别
+      BROKER_NAME: "xzdp-broker"
+      # 默认自动创建主题（个人项目无需手动创建）
+      AUTO_CREATE_TOPIC_ENABLE: "true"
+    volumes:
+      - ./data/rocketmq/broker/logs:/home/rocketmq/logs  # 日志持久化
+      - ./data/rocketmq/broker/store:/home/rocketmq/store  # 消息数据持久化
+    restart: on-failure
+    # 启动Broker，指定配置（极简模式）
+    command: sh mqbroker -c /home/rocketmq/conf/broker.conf
+    # 依赖：必须等NameServer启动后再启动Broker
+    depends_on:
+      - rocketmq-namesrv

@@ -25,8 +25,8 @@ func Init() {
 	JwtMiddleware, err = jwt.New(&jwt.HertzJWTMiddleware{
 		Realm:       "xzdp-starter",                 // 认证域，自定义即可
 		Key:         []byte("xzdp_2026_jwt_secret"), // 加密密钥，生产环境用环境变量！
-		Timeout:     time.Hour,                      // Token有效期
-		MaxRefresh:  time.Hour,                      // Token最大刷新时间
+		Timeout:     time.Minute,                      // Token有效期
+		MaxRefresh:  time.Minute,                      // Token最大刷新时间
 		IdentityKey: identity,
 
 		// 认证函数
